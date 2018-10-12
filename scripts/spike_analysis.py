@@ -177,15 +177,15 @@ def spike_bg(fpath, labels):
     imsave('scratch/shedded.png', shedded)
 
 
-def generate_image_for_labelling(fpath):
+def generate_image_for_labelling(input_fpath, output_fpath):
     """Generate an image for manual seed marking"""
 
-    im = imread(fpath)
+    im = imread(input_fpath)
     scaled = rescale_as_float(im)
 
     eq = equalize_adapthist(scaled)
 
-    imsave('newmarkmeq.png', eq)
+    imsave(output_fpath, eq)
 
 
 def results_csv_to_label_image(csv_fpath):
@@ -343,11 +343,11 @@ def make_composite_image(c0, c1):
     return composite
 
 
-def load_voronoi_and_experiment(filename):
+def load_voronoi_and_experiment(voronoi_fpath, mask_fpath):
 
-    voronoi = load_segmentation_from_rgb_image(filename)
+    voronoi = load_segmentation_from_rgb_image(voronoi_fpath)
 
-    mask = make_mask('scratch/adapt.png')
+    mask = rescale_as_float(imread(mask_fpath))
 
     masked_image = apply_mask_to_image(mask, voronoi)
     imsave('pretty.png', masked_image.view(SegmentedImage).pretty_color_image)
@@ -356,33 +356,56 @@ def load_voronoi_and_experiment(filename):
 
     imimsave('boundaries.png', boundaries)
 
-    comp = make_composite_image(imread('scratch/adapt.png'), imread('markmeq.png'))
+    comp = make_composite_image(imread('adapt.png'), imread('nuclei_to_mark_03.png'))
 
     comp[np.where(boundaries)] = [255, 255, 0]
 
     imsave('comp.png', comp)
 
 
+def generate_mask_image(image_fpath, output_fpath):
+
+    im = imread(image_fpath)
+
+    scaled = rescale_as_float(im)
+
+    imsave('auto.png', scaled)
+
+    adapt = equalize_adapthist(scaled)
+
+    imsave('adapt.png', adapt)
+
+    smoothed = gaussian(adapt, sigma=5)
+
+    mask = smoothed > 0.2
+
+    imimsave(output_fpath, mask)
+
+
 @click.command()
 @click.argument('image_dir')
 def main(image_dir):
 
-    # generate_image_for_labelling('data_intermediate/ColFRI-semisq_PP2A_FLC_02/converted_S0_C0_Z20.png')
-    # convert_nuclei_centroids_to_voronoi('C1Results.csv', 'C1Voronoi.png')
+    # generate_image_for_labelling(
+    #     'data_intermediate/ColFRI-semisq_PP2A_FLC_03/converted_S0_C0_Z20.png',
+    #     'nuclei_to_mark_03.png'
+    # )
+    # convert_nuclei_centroids_to_voronoi('C2Results.csv', 'C2Voronoi.png')
+    # generate_mask_image(
+    #     'data_intermediate/ColFRI-semisq_PP2A_FLC_03/converted_S0_C1_Z20.png',
+    #     'mask_03.png'
+    # )
 
-    # load_voronoi_and_experiment('vrgb.png')
-    # try_voronoi('Results.csv')
-    # voronoi_qhull('Results.csv')
-    # try_both('data_intermediate/converted_S0C0Z20.png', 'data_intermediate/converted_S0C1Z20.png')
-    # load_all_channel(image_dir, 0)
+    # load_voronoi_and_experiment('C3Voronoi.png', 'mask_03.png')
 
-    # labels = spike_single('data_intermediate/converted_S0C0Z20.png')
+    watershed = imread('scratch/shedded.png')
+    borders = find_boundaries(watershed)
+    imimsave('borders.png', borders)
+    comp = make_composite_image(imread('scratch/adapt.png'), imread('markmeq.png'))
 
-    # spike_bg('data_intermediate/converted_S0C1Z20.png', labels)
+    comp[np.where(borders)] = [255, 255, 0]
 
-
-    # label_image = results_csv_to_label_image('Results.csv')
-    # spike_bg('data_intermediate/converted_S0C1Z20.png', label_image)
+    imsave('comp.png', comp)
 
 
 if __name__ == '__main__':
