@@ -9,6 +9,11 @@ Image conversion
 Manual marker image generation
 ------------------------------
 
+1. Load image
+2. Select multiple point tool
+3. Click points
+4. Analyse->Measure
+5. File->Save (as CSV)
 
 
 Pipelines
