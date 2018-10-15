@@ -7,7 +7,6 @@ import numpy as np
 from imageio import imread, imsave
 
 from skimage.exposure import equalize_adapthist
-from skimage.segmentation import find_boundaries
 
 
 def rescale_as_float(im):
